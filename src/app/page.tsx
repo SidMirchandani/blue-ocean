@@ -1,10 +1,8 @@
 "use client"
 
 import { useState, useRef, useEffect } from 'react';
-import { BrainCircuit, Send, Camera, Image as ImageIcon, Mic, Loader2, AlertTriangle, RotateCcw, Activity } from 'lucide-react';
+import { BrainCircuit, Send, Camera, Image as ImageIcon, Loader2, AlertTriangle, RotateCcw, Activity } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent } from '@/components/ui/card';
-import { ScrollArea } from '@/components/ui/scroll-area';
 import { BottomNav } from '@/components/navigation/BottomNav';
 import { emergencyAidGuidance, EmergencyAidGuidanceOutput } from '@/ai/flows/emergency-aid-guidance';
 import { useToast } from '@/hooks/use-toast';
@@ -88,14 +86,16 @@ export default function ChatPage() {
     };
 
     setMessages(prev => [...prev, userMsg]);
-    setInput('');
+    const currentInput = input;
     const currentImg = selectedImage;
+    
+    setInput('');
     setSelectedImage(null);
     setLoading(true);
 
     try {
       const result = await emergencyAidGuidance({
-        situationDescription: input,
+        situationDescription: currentInput,
         photoDataUri: currentImg || undefined
       });
 
@@ -207,7 +207,7 @@ export default function ChatPage() {
         <div className="max-w-3xl mx-auto flex flex-col gap-2">
           {selectedImage && (
             <div className="relative w-20 h-20 rounded-xl overflow-hidden mb-2 group">
-              <img src={selectedImage} className="w-full h-full object-cover" />
+              <img src={selectedImage} className="w-full h-full object-cover" alt="Preview" />
               <button 
                 className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity"
                 onClick={() => setSelectedImage(null)}
@@ -231,6 +231,7 @@ export default function ChatPage() {
             <div className="flex-1 relative">
               <textarea
                 rows={1}
+                suppressHydrationWarning
                 className="w-full bg-secondary/50 border-none rounded-2xl px-4 py-3 text-sm focus:ring-2 focus:ring-primary outline-none resize-none max-h-32"
                 placeholder="What is happening?"
                 value={input}

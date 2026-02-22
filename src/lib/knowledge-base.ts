@@ -4,7 +4,6 @@ export interface Article {
   category: 'Critical' | 'Injury' | 'Environmental' | 'Other';
   summary: string;
   content: string[];
-  image: string;
 }
 
 export const KNOWLEDGE_BASE: Article[] = [
@@ -13,7 +12,6 @@ export const KNOWLEDGE_BASE: Article[] = [
     title: 'Adult CPR',
     category: 'Critical',
     summary: 'Essential steps for performing Cardiopulmonary Resuscitation on an adult.',
-    image: 'cpr-guide',
     content: [
       'Check the scene for safety.',
       'Check for responsiveness. Tap shoulder and shout "Are you okay?".',
@@ -29,7 +27,6 @@ export const KNOWLEDGE_BASE: Article[] = [
     title: 'Choking (Heimlich Maneuver)',
     category: 'Critical',
     summary: 'How to clear an airway obstruction in a conscious adult.',
-    image: 'choking-rescue',
     content: [
       'Confirm the person is choking (cannot breathe, cough, or speak).',
       'Stand behind the person and wrap your arms around their waist.',
@@ -44,7 +41,6 @@ export const KNOWLEDGE_BASE: Article[] = [
     title: 'Burn Care',
     category: 'Injury',
     summary: 'First aid for thermal, chemical, or electrical burns.',
-    image: 'burns-care',
     content: [
       'Stop the burning process: Remove the source of heat.',
       'Cool the burn: Run cool (not cold) tap water over the area for 10-20 minutes.',
@@ -59,7 +55,6 @@ export const KNOWLEDGE_BASE: Article[] = [
     title: 'Severe Bleeding',
     category: 'Critical',
     summary: 'Steps to control heavy blood loss from a wound.',
-    image: 'hero-bg',
     content: [
       'Put on gloves if available.',
       'Apply direct pressure to the wound using a clean cloth or sterile bandage.',

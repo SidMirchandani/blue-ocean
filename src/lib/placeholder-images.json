@@ -1,28 +1,3 @@
 {
-  "placeholderImages": [
-    {
-      "id": "cpr-guide",
-      "description": "CPR demonstration illustration",
-      "imageUrl": "https://images.unsplash.com/photo-1631507623095-c710d184498f?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwyfHxDUFIlMjBtZWRpY2FsfGVufDB8fHx8MTc3MTgwNDE2Mnww&ixlib=rb-4.1.0&q=80&w=1080",
-      "imageHint": "CPR medical"
-    },
-    {
-      "id": "burns-care",
-      "description": "Treating a burn with cool water",
-      "imageUrl": "https://images.unsplash.com/photo-1561464494-8253a638f1bd?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw1fHxidXJuJTIwdHJlYXRtZW50fGVufDB8fHx8MTc3MTgwNDE2M3ww&ixlib=rb-4.1.0&q=80&w=1080",
-      "imageHint": "burn treatment"
-    },
-    {
-      "id": "choking-rescue",
-      "description": "Heimlich maneuver illustration",
-      "imageUrl": "https://images.unsplash.com/photo-1570028003849-17e995b95147?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw2fHxjaG9raW5nJTIwcmVzY3VlfGVufDB8fHx8MTc3MTgwNDE2Mnww&ixlib=rb-4.1.0&q=80&w=1080",
-      "imageHint": "choking rescue"
-    },
-    {
-      "id": "hero-bg",
-      "description": "Modern medical dashboard abstract background",
-      "imageUrl": "https://images.unsplash.com/photo-1576091160550-2173dba999ef?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw2fHxtZWRpY2FsJTIwdGVjaG5vbG9neXxlbnwwfHx8fDE3NzE4MDQxNjJ8MA&ixlib=rb-4.1.0&q=80&w=1080",
-      "imageHint": "medical technology"
-    }
-  ]
+  "placeholderImages": []
 }

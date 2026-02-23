@@ -1,51 +1,55 @@
 'use server';
 /**
- * @fileOverview An AI agent providing emergency first-aid or safety guidance.
- * Supports both text descriptions and visual inputs.
+ * @fileOverview PathoScan AI Analysis Flow.
+ * Handles conversational safety guidance and hazard identification.
  */
 
 import {ai} from '@/ai/genkit';
 import {z} from 'genkit';
 
-const EmergencyAidGuidanceInputSchema = z.object({
-  situationDescription: z.string().optional().describe("A natural language description of the medical emergency."),
-  photoDataUri: z.string().optional().describe("A photo of the injury or situation as a data URI.")
+const PathoScanInputSchema = z.object({
+  message: z.string().optional().describe("User's text input or question."),
+  photoDataUri: z.string().optional().describe("A photo of the situation as a data URI.")
 });
-export type EmergencyAidGuidanceInput = z.infer<typeof EmergencyAidGuidanceInputSchema>;
+export type PathoScanInput = z.infer<typeof PathoScanInputSchema>;
 
-const EmergencyAidGuidanceOutputSchema = z.object({
-  title: z.string().describe("A concise title for the protocol."),
-  instructions: z.array(z.string()).describe("Step-by-step first-aid instructions."),
+const PathoScanOutputSchema = z.object({
+  reply: z.string().describe("The conversational response to the user."),
+  hasStructuredGuidance: z.boolean().describe("Whether structured first-aid steps follow."),
+  title: z.string().optional().describe("A concise title for the protocol if applicable."),
+  instructions: z.array(z.string()).optional().describe("Step-by-step first-aid instructions if applicable."),
   warning: z.string().optional().describe("Critical safety warnings.")
 });
-export type EmergencyAidGuidanceOutput = z.infer<typeof EmergencyAidGuidanceOutputSchema>;
+export type PathoScanOutput = z.infer<typeof PathoScanOutputSchema>;
 
-export async function emergencyAidGuidance(input: EmergencyAidGuidanceInput): Promise<EmergencyAidGuidanceOutput> {
-  return emergencyAidGuidanceFlow(input);
+export async function pathoScanAnalysis(input: PathoScanInput): Promise<PathoScanOutput> {
+  return pathoScanFlow(input);
 }
 
 const prompt = ai.definePrompt({
-  name: 'emergencyAidGuidancePrompt',
-  input: {schema: EmergencyAidGuidanceInputSchema},
-  output: {schema: EmergencyAidGuidanceOutputSchema},
-  prompt: `You are an expert emergency medical assistant. Provide clear, immediate first-aid instructions based on the input.
-  
-{{#if situationDescription}}
-Description: {{{situationDescription}}}
-{{/if}}
+  name: 'pathoScanPrompt',
+  input: {schema: PathoScanInputSchema},
+  output: {schema: PathoScanOutputSchema},
+  prompt: `You are PathoScan AI, a sophisticated safety and first-aid assistant.
 
-{{#if photoDataUri}}
-Visual Input: {{media url=photoDataUri}}
-{{/if}}
+Guidelines:
+1. If the user just says "Hi" or asks a general question, be friendly and conversational.
+2. If the user describes an emergency, injury, or provides a photo of a hazard (mold, insects, plants, wounds), provide immediate safety advice.
+3. When providing medical/safety advice, set 'hasStructuredGuidance' to true and fill the 'instructions' array.
+4. Keep the 'reply' field conversational and reassuring.
 
-Prioritize life-saving actions. If a photo is provided, identify visible injuries and provide specific care steps.`,
+Input:
+{{#if message}}Text: {{{message}}}{{/if}}
+{{#if photoDataUri}}Photo: {{media url=photoDataUri}}{{/if}}
+
+Always prioritize human life. If it seems critical, remind them to call 911 immediately in the 'warning' or 'reply'.`,
 });
 
-const emergencyAidGuidanceFlow = ai.defineFlow(
+const pathoScanFlow = ai.defineFlow(
   {
-    name: 'emergencyAidGuidanceFlow',
-    inputSchema: EmergencyAidGuidanceInputSchema,
-    outputSchema: EmergencyAidGuidanceOutputSchema,
+    name: 'pathoScanFlow',
+    inputSchema: PathoScanInputSchema,
+    outputSchema: PathoScanOutputSchema,
   },
   async (input) => {
     const {output} = await prompt(input);

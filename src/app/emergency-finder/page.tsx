@@ -55,7 +55,6 @@ export default function EmergencyFinderPage() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // Simulate finding local services
     const timer = setTimeout(() => setLoading(false), 1500);
     return () => clearTimeout(timer);
   }, []);
@@ -65,7 +64,7 @@ export default function EmergencyFinderPage() {
   };
 
   return (
-    <div className="flex flex-col min-h-screen bg-background">
+    <div className="flex flex-col min-h-screen bg-background pb-24">
       <header className="sticky top-0 z-30 bg-background/80 backdrop-blur-md border-b border-border p-4 flex items-center justify-between">
         <div className="flex items-center gap-4">
           <Link href="/">
@@ -76,90 +75,96 @@ export default function EmergencyFinderPage() {
           <h1 className="font-bold text-xl font-headline">Facility Finder</h1>
         </div>
         {!loading && (
-          <Button variant="ghost" size="icon" className="text-primary">
+          <Button variant="ghost" size="icon" className="text-primary rounded-full">
             <Navigation className="h-5 w-5" />
           </Button>
         )}
       </header>
 
-      <main className="flex-1 px-4 py-6 overflow-y-auto">
+      <main className="flex-1 px-6 py-6">
         {loading ? (
-          <div className="flex flex-col items-center justify-center h-full gap-4 text-center">
+          <div className="flex flex-col items-center justify-center h-[60vh] gap-4 text-center">
             <Loader2 className="h-10 w-10 text-primary animate-spin" />
             <div className="space-y-1">
               <p className="font-bold">Locating nearby facilities...</p>
-              <p className="text-xs text-muted-foreground">Using device location services</p>
+              <p className="text-xs text-muted-foreground">Using device GPS services</p>
             </div>
           </div>
         ) : (
-          <div className="space-y-6 pb-20">
-            {/* Mock Map View Area */}
-            <div className="relative h-48 w-full bg-secondary/50 rounded-2xl border border-border overflow-hidden group">
-              <div className="absolute inset-0 flex items-center justify-center bg-gradient-to-br from-primary/5 to-accent/5">
+          <div className="space-y-6">
+            {/* Mock Map Area */}
+            <div className="relative h-56 w-full bg-card rounded-[2rem] border border-border/50 overflow-hidden">
+              <div className="absolute inset-0 bg-[#0B1215] flex items-center justify-center">
+                {/* Visual Map Mockup */}
+                <div className="absolute inset-0 opacity-20" style={{ backgroundImage: 'radial-gradient(circle, #333 1px, transparent 1px)', backgroundSize: '30px 30px' }}></div>
                 <div className="relative">
-                   <div className="absolute -inset-4 bg-primary/20 rounded-full animate-ping opacity-25" />
-                   <div className="relative h-6 w-6 bg-primary rounded-full border-2 border-white flex items-center justify-center shadow-lg">
+                   <div className="absolute -inset-6 bg-primary/20 rounded-full animate-ping opacity-25" />
+                   <div className="relative h-8 w-8 bg-primary rounded-full border-4 border-background flex items-center justify-center shadow-xl">
                       <div className="h-2 w-2 bg-white rounded-full" />
                    </div>
                 </div>
                 {MOCK_FACILITIES.map((f, i) => (
                   <div 
                     key={f.id}
-                    className="absolute"
+                    className="absolute transition-transform hover:scale-110"
                     style={{
-                      top: `${20 + (i * 25)}%`,
-                      left: `${30 + (i * 20)}%`
+                      top: `${25 + (i * 20)}%`,
+                      left: `${20 + (i * 25)}%`
                     }}
                   >
-                    <MapPin className="h-5 w-5 text-accent drop-shadow-sm" />
+                    <div className="relative flex flex-col items-center">
+                      <MapPin className="h-6 w-6 text-red-500 fill-red-500/20" />
+                      <div className="bg-card/90 backdrop-blur-md border border-border px-2 py-0.5 rounded text-[8px] font-bold mt-1 shadow-lg">
+                        {f.name.split(' ')[0]}
+                      </div>
+                    </div>
                   </div>
                 ))}
               </div>
-              <div className="absolute bottom-3 left-3 bg-card/90 backdrop-blur-sm px-3 py-1.5 rounded-lg border border-border text-[10px] font-bold">
-                MAP VIEW ACTIVE
+              <div className="absolute top-4 left-4 bg-primary text-primary-foreground px-3 py-1 rounded-full text-[10px] font-bold shadow-lg">
+                GPS ACTIVE
               </div>
             </div>
 
             <div className="flex items-center justify-between">
               <h2 className="font-bold text-sm text-muted-foreground uppercase tracking-widest">Closest Locations</h2>
-              <span className="text-xs text-primary font-medium">3 found</span>
+              <span className="text-[10px] bg-secondary px-2 py-1 rounded-full font-bold">3 RESULTS</span>
             </div>
 
             <div className="space-y-4">
               {MOCK_FACILITIES.map((facility) => (
-                <Card key={facility.id} className="bg-card border-border/50 hover:border-primary/30 transition-all overflow-hidden">
+                <Card key={facility.id} className="bg-card border-border/50 hover:border-primary/30 transition-all rounded-3xl overflow-hidden">
                   <CardContent className="p-0">
-                    <div className="p-4 flex gap-4">
-                      <div className="h-12 w-12 rounded-2xl bg-secondary flex items-center justify-center text-primary shrink-0">
-                        <Hospital className="h-6 w-6" />
+                    <div className="p-5 flex gap-4">
+                      <div className="h-14 w-14 rounded-2xl bg-secondary flex items-center justify-center text-primary shrink-0 border border-primary/10">
+                        <Hospital className="h-7 w-7" />
                       </div>
                       <div className="flex-1">
                         <div className="flex justify-between items-start mb-1">
-                          <h3 className="font-bold text-base leading-tight">{facility.name}</h3>
-                          <div className="flex items-center gap-1 px-1.5 py-0.5 rounded bg-primary/10 text-primary text-[10px] font-bold">
+                          <h3 className="font-bold text-lg leading-tight">{facility.name}</h3>
+                          <div className="flex items-center gap-1 px-2 py-0.5 rounded-lg bg-primary/10 text-primary text-[10px] font-bold">
                             <Star className="h-2.5 w-2.5 fill-current" />
                             {facility.rating}
                           </div>
                         </div>
-                        <p className="text-xs text-muted-foreground mb-1">{facility.address}</p>
-                        <div className="flex items-center gap-3 text-[10px] uppercase font-bold tracking-wider">
-                          <span className="text-accent">{facility.type}</span>
-                          <span className="text-muted-foreground">•</span>
-                          <span className="text-foreground">{facility.distance}</span>
+                        <p className="text-xs text-muted-foreground mb-2">{facility.address}</p>
+                        <div className="flex items-center gap-3">
+                          <span className="text-[10px] uppercase font-bold text-primary bg-primary/10 px-2 py-0.5 rounded-md">{facility.type}</span>
+                          <span className="text-[10px] uppercase font-bold text-foreground bg-secondary px-2 py-0.5 rounded-md">{facility.distance}</span>
                         </div>
                       </div>
                     </div>
                     <div className="flex border-t border-border">
                       <Button 
                         variant="ghost" 
-                        className="flex-1 rounded-none h-12 text-primary font-bold gap-2 hover:bg-primary/5"
+                        className="flex-1 rounded-none h-14 text-primary font-bold gap-2 hover:bg-primary/5 active:bg-primary/10 transition-colors"
                         onClick={() => handleCall(facility.phone)}
                       >
                         <Phone className="h-4 w-4" />
-                        Direct Call
+                        Call Now
                       </Button>
                       <div className="w-[1px] bg-border" />
-                      <Button variant="ghost" className="flex-1 rounded-none h-12 font-bold gap-2 hover:bg-secondary">
+                      <Button variant="ghost" className="flex-1 rounded-none h-14 font-bold gap-2 hover:bg-secondary active:bg-secondary/50 transition-colors">
                         <Navigation className="h-4 w-4" />
                         Navigate
                       </Button>
@@ -169,12 +174,12 @@ export default function EmergencyFinderPage() {
               ))}
             </div>
 
-            <div className="p-4 bg-primary/5 rounded-2xl border border-primary/20 flex items-start gap-4">
-               <Activity className="h-5 w-5 text-primary shrink-0 mt-0.5" />
+            <div className="p-5 bg-primary/5 rounded-3xl border border-primary/20 flex items-start gap-4">
+               <Activity className="h-6 w-6 text-primary shrink-0" />
                <div className="space-y-1">
                   <h4 className="font-bold text-sm">Emergency Protocol</h4>
-                  <p className="text-xs text-muted-foreground">
-                    If you are driving, ensure you are alert. If the patient is unstable, pull over safely and wait for an ambulance.
+                  <p className="text-xs text-muted-foreground leading-relaxed">
+                    If traveling to a trauma center, ensure the patient is stabilized. If status changes, call emergency services while in transit.
                   </p>
                </div>
             </div>

@@ -5,6 +5,7 @@ import { Scan, Send, Camera, Image as ImageIcon, Loader2, AlertTriangle, RotateC
 import { Button } from '@/components/ui/button';
 import { BottomNav } from '@/components/navigation/BottomNav';
 import { pathoScanAnalysis, PathoScanOutput } from '@/ai/flows/emergency-aid-guidance';
+import { refineTranscription } from '@/ai/flows/refine-transcription';
 import { useToast } from '@/hooks/use-toast';
 import Link from 'next/link';
 import { cn } from '@/lib/utils';
@@ -24,7 +25,9 @@ export default function ScanPage() {
   const [isCameraActive, setIsCameraActive] = useState(false);
   const [facingMode, setFacingMode] = useState<'user' | 'environment'>('environment');
   const [isListening, setIsListening] = useState(false);
+  const [isRefining, setIsRefining] = useState(false);
   const recognitionRef = useRef<any>(null);
+  const finalTranscriptRef = useRef<string>('');
   
   const scrollRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -96,6 +99,20 @@ export default function ScanPage() {
     setIsCameraActive(false);
   };
 
+  const handleRefineText = async (rawText: string) => {
+    if (!rawText.trim()) return;
+    setIsRefining(true);
+    try {
+      const { refinedText } = await refineTranscription({ text: rawText });
+      setInput(prev => prev + (prev ? ' ' : '') + refinedText);
+    } catch (error) {
+      console.error("Refinement failed", error);
+      setInput(prev => prev + (prev ? ' ' : '') + rawText);
+    } finally {
+      setIsRefining(false);
+    }
+  };
+
   const toggleVoice = () => {
     const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
     if (!SpeechRecognition) {
@@ -105,7 +122,6 @@ export default function ScanPage() {
 
     if (isListening) {
       recognitionRef.current?.stop();
-      setIsListening(false);
       return;
     }
 
@@ -114,19 +130,32 @@ export default function ScanPage() {
     recognition.interimResults = true;
     recognition.lang = 'en-US';
 
-    recognition.onstart = () => setIsListening(true);
-    recognition.onend = () => setIsListening(false);
-    recognition.onerror = () => setIsListening(false);
+    finalTranscriptRef.current = '';
+
+    recognition.onstart = () => {
+      setIsListening(true);
+    };
+
+    recognition.onend = () => {
+      setIsListening(false);
+      if (finalTranscriptRef.current) {
+        handleRefineText(finalTranscriptRef.current);
+      }
+    };
+
+    recognition.onerror = (event: any) => {
+      console.error("Speech Recognition Error", event.error);
+      setIsListening(false);
+    };
     
     recognition.onresult = (event: any) => {
-      let finalTranscript = '';
+      let currentTranscript = '';
       for (let i = event.resultIndex; i < event.results.length; ++i) {
         if (event.results[i].isFinal) {
-          finalTranscript += event.results[i][0].transcript;
+          finalTranscriptRef.current += event.results[i][0].transcript;
+        } else {
+          currentTranscript += event.results[i][0].transcript;
         }
-      }
-      if (finalTranscript) {
-        setInput(prev => prev + (prev ? ' ' : '') + finalTranscript);
       }
     };
 
@@ -266,10 +295,10 @@ export default function ScanPage() {
             </div>
           ))
         )}
-        {loading && (
+        {(loading || isRefining) && (
           <div className="flex items-center gap-2 text-primary font-bold text-xs bg-primary/5 p-3 rounded-xl w-fit">
             <Loader2 className="h-3 w-3 animate-spin" />
-            <span>AI is processing...</span>
+            <span>{isRefining ? 'Polishing transcription...' : 'AI is processing...'}</span>
           </div>
         )}
         <div ref={scrollRef} />
@@ -352,27 +381,38 @@ export default function ScanPage() {
             </div>
             
             <div className="flex-1 flex items-center h-full px-1">
-              <textarea
-                rows={1}
-                suppressHydrationWarning
-                className="w-full bg-transparent border-none py-3 text-sm focus:ring-0 outline-none resize-none max-h-32 placeholder:text-muted-foreground/40 mt-1"
-                placeholder={isListening ? "Listening..." : "What's the hazard?"}
-                value={input}
-                onChange={(e) => {
-                  setInput(e.target.value);
-                  e.target.style.height = 'auto';
-                  e.target.style.height = e.target.scrollHeight + 'px';
-                }}
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter' && !e.shiftKey) {
-                    e.preventDefault();
-                    handleSubmit();
-                  }
-                }}
-              />
+              {isListening ? (
+                <div className="flex items-center gap-3 px-2 py-1 animate-pulse">
+                  <div className="flex gap-1">
+                    {[1, 2, 3].map(i => (
+                      <div key={i} className="h-3 w-1 bg-primary rounded-full animate-bounce" style={{ animationDelay: `${i * 0.1}s` }} />
+                    ))}
+                  </div>
+                  <span className="text-sm font-bold text-primary uppercase tracking-widest">Listening...</span>
+                </div>
+              ) : (
+                <textarea
+                  rows={1}
+                  suppressHydrationWarning
+                  className="w-full bg-transparent border-none py-3 text-sm focus:ring-0 outline-none resize-none max-h-32 placeholder:text-muted-foreground/40 mt-1"
+                  placeholder="What's the hazard?"
+                  value={input}
+                  onChange={(e) => {
+                    setInput(e.target.value);
+                    e.target.style.height = 'auto';
+                    e.target.style.height = e.target.scrollHeight + 'px';
+                  }}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' && !e.shiftKey) {
+                      e.preventDefault();
+                      handleSubmit();
+                    }
+                  }}
+                />
+              )}
             </div>
 
-            <Button size="icon" className="rounded-xl h-11 w-11 bg-primary hover:bg-primary/90 text-black shadow-lg shrink-0" onClick={() => handleSubmit()} disabled={loading || (!input.trim() && !selectedImage)}>
+            <Button size="icon" className="rounded-xl h-11 w-11 bg-primary hover:bg-primary/90 text-black shadow-lg shrink-0" onClick={() => handleSubmit()} disabled={loading || isRefining || (!input.trim() && !selectedImage)}>
               <Send className="h-5 w-5" />
             </Button>
           </div>

@@ -1,67 +1,110 @@
 export interface Article {
   id: string;
   title: string;
-  category: 'Critical' | 'Injury' | 'Environmental' | 'Other';
+  category: 'Chemical' | 'Biological' | 'Radiation' | 'Industrial' | 'Home';
+  type: 'Protocol' | 'Article';
   summary: string;
   content: string[];
+  readTime?: string;
 }
 
 export const KNOWLEDGE_BASE: Article[] = [
+  // QUICK PROTOCOLS (Action-Oriented Cleanup)
   {
-    id: 'cpr-adult',
-    title: 'Adult CPR',
-    category: 'Critical',
-    summary: 'Essential steps for performing Cardiopulmonary Resuscitation on an adult.',
+    id: 'mold-remediation',
+    title: 'Black Mold Remediation',
+    category: 'Biological',
+    type: 'Protocol',
+    summary: 'Safe step-by-step removal of localized Stachybotrys chartarum (black mold).',
     content: [
-      'Check the scene for safety.',
-      'Check for responsiveness. Tap shoulder and shout "Are you okay?".',
-      'If unresponsive, call emergency services immediately.',
-      'Check for breathing for no more than 10 seconds.',
-      'Give 30 chest compressions: Push hard and fast in the center of the chest.',
-      'Give 2 rescue breaths: Tilt head back, lift chin, and blow into the mouth.',
-      'Continue cycles of 30 compressions and 2 breaths until help arrives or an AED is available.'
+      'Seal off the area with plastic sheeting to prevent spore travel.',
+      'Wear PPE: N-95 respirator, goggles, and long gloves are mandatory.',
+      'Mist the moldy area with water to prevent spores from becoming airborne.',
+      'Scrub the surface with a mixture of water and detergent.',
+      'Apply a disinfectant: Use a solution of 1 cup bleach to 1 gallon of water.',
+      'Dry the area completely within 24 hours using fans and dehumidifiers.',
+      'Dispose of cleaning materials in sealed heavy-duty plastic bags.'
     ]
   },
   {
-    id: 'choking-adult',
-    title: 'Choking (Heimlich Maneuver)',
-    category: 'Critical',
-    summary: 'How to clear an airway obstruction in a conscious adult.',
+    id: 'chemical-spill-solvent',
+    title: 'Solvent Spill Cleanup',
+    category: 'Industrial',
+    type: 'Protocol',
+    summary: 'Immediate response for organic solvent spills (acetone, benzene, toluene).',
     content: [
-      'Confirm the person is choking (cannot breathe, cough, or speak).',
-      'Stand behind the person and wrap your arms around their waist.',
-      'Make a fist with one hand and place the thumb side against their abdomen, just above the navel.',
-      'Grasp your fist with your other hand.',
-      'Perform quick, upward thrusts into the abdomen.',
-      'Continue until the object is forced out or the person becomes unconscious.'
+      'Eliminate all ignition sources immediately (no smoking, no sparks).',
+      'Increase ventilation by opening windows or using explosion-proof fans.',
+      'Dike the spill using absorbent socks or sand to prevent drainage entry.',
+      'Apply absorbent material (activated carbon or universal sorbent).',
+      'Use non-sparking tools (plastic shovels) to collect the saturated material.',
+      'Place waste in a secondary containment drum for hazardous disposal.',
+      'Wash the area with a degreasing agent once the bulk spill is removed.'
     ]
   },
   {
-    id: 'burns-treatment',
-    title: 'Burn Care',
-    category: 'Injury',
-    summary: 'First aid for thermal, chemical, or electrical burns.',
+    id: 'lead-dust-control',
+    title: 'Lead Dust Management',
+    category: 'Home',
+    type: 'Protocol',
+    summary: 'Reducing exposure during renovation or from old paint dust.',
     content: [
-      'Stop the burning process: Remove the source of heat.',
-      'Cool the burn: Run cool (not cold) tap water over the area for 10-20 minutes.',
-      'Remove jewelry or restrictive clothing before swelling occurs.',
-      'Cover loosely with a sterile, non-stick bandage or clean cloth.',
-      'Do not apply ice, butter, or ointments to a severe burn.',
-      'Seek medical attention for large burns, burns on face/hands, or chemical/electrical burns.'
+      'Never dry sand or dry scrape lead-based paint.',
+      'Use a HEPA-filtered vacuum only; standard vacuums will exhaust lead dust back into the air.',
+      'Wet-mop floors and wet-wipe surfaces daily during high-risk periods.',
+      'Wash hands and faces of children frequently, especially before eating.',
+      'Change clothes and shower before leaving a renovation site.',
+      'Isolate work areas using heavy-duty plastic and tape.'
     ]
   },
   {
-    id: 'severe-bleeding',
-    title: 'Severe Bleeding',
-    category: 'Critical',
-    summary: 'Steps to control heavy blood loss from a wound.',
+    id: 'mercury-cleanup',
+    title: 'Mercury Spill Response',
+    category: 'Chemical',
+    type: 'Protocol',
+    summary: 'Correct handling of broken thermometers or fluorescent bulbs.',
     content: [
-      'Put on gloves if available.',
-      'Apply direct pressure to the wound using a clean cloth or sterile bandage.',
-      'If the cloth soaks through, add more layers without removing the first one.',
-      'Maintain steady pressure until bleeding stops or help arrives.',
-      'If bleeding is life-threatening and on a limb, consider applying a tourniquet high and tight.',
-      'Keep the person warm and treat for shock.'
+      'Evacuate the room and keep people/pets away.',
+      'Open windows and turn off central heating/air conditioning.',
+      'Do NOT use a vacuum or broom; this breaks mercury into toxic vapors.',
+      'Use stiff paper or cardboard to "herd" beads together.',
+      'Use a dropper or sticky tape to pick up beads.',
+      'Place all materials and the mercury in a glass jar with a metal lid.',
+      'Contact local hazardous waste disposal for drop-off instructions.'
+    ]
+  },
+
+  // DEEP DIVE ARTICLES (Information-Oriented Literacy)
+  {
+    id: 'understanding-vocs',
+    title: 'The Invisible Threat: VOCs',
+    category: 'Home',
+    type: 'Article',
+    readTime: '5 min',
+    summary: 'A deep dive into Volatile Organic Compounds found in everyday household items.',
+    content: [
+      'VOCs are gases emitted from certain solids or liquids, often found in paints and cleaners.',
+      'Concentrations of many VOCs are consistently higher indoors (up to ten times higher) than outdoors.',
+      'Health effects include eye/nose irritation, headaches, and damage to the central nervous system.',
+      'Key sources: hobby supplies, dry-cleaned clothing, and building materials.',
+      'Prevention involves choosing low-VOC products and increasing ventilation.',
+      'Long-term exposure can lead to chronic respiratory issues and "Sick Building Syndrome".'
+    ]
+  },
+  {
+    id: 'asbestos-science',
+    title: 'Asbestos: The Mineral Fibers',
+    category: 'Industrial',
+    type: 'Article',
+    readTime: '7 min',
+    summary: 'Understanding why this insulation material remains a global health concern.',
+    content: [
+      'Asbestos is a group of naturally occurring fibrous minerals with high heat resistance.',
+      'Risk occurs when materials are "friable" (easily crumbled), releasing microscopic fibers.',
+      'Once inhaled, fibers can remain in the lungs for decades, leading to mesothelioma.',
+      'Common locations: pipe insulation, floor tiles, and textured ceilings in pre-1980 buildings.',
+      'Testing by a certified laboratory is the only way to confirm its presence.',
+      'Proper abatement requires specialized vacuum systems and negative-pressure air units.'
     ]
   }
 ];

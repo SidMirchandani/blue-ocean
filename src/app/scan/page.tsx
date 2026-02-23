@@ -1,8 +1,7 @@
-
 "use client"
 
 import { useState, useRef, useEffect } from 'react';
-import { Scan, Send, Camera, Image as ImageIcon, Loader2, AlertTriangle, RotateCcw, Activity, ArrowLeft, X, RefreshCw } from 'lucide-react';
+import { Scan, Send, Camera, Image as ImageIcon, Loader2, AlertTriangle, RotateCcw, ArrowLeft, X, RefreshCw, Mic, MicOff } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { BottomNav } from '@/components/navigation/BottomNav';
 import { pathoScanAnalysis, PathoScanOutput } from '@/ai/flows/emergency-aid-guidance';
@@ -24,7 +23,7 @@ export default function ScanPage() {
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
   const [isCameraActive, setIsCameraActive] = useState(false);
   const [facingMode, setFacingMode] = useState<'user' | 'environment'>('environment');
-  const [hasCameraPermission, setHasCameraPermission] = useState<boolean | null>(null);
+  const [isListening, setIsListening] = useState(false);
   
   const scrollRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -53,22 +52,17 @@ export default function ScanPage() {
       const stream = await navigator.mediaDevices.getUserMedia({ 
         video: { facingMode: mode, width: { ideal: 1280 }, height: { ideal: 720 } } 
       });
-      setHasCameraPermission(true);
       setIsCameraActive(true);
-      
-      // Delay setting srcObject slightly to ensure ref is mounted in the overlay
       setTimeout(() => {
         if (videoRef.current) {
           videoRef.current.srcObject = stream;
         }
       }, 100);
     } catch (err) {
-      console.error("Camera error:", err);
-      setHasCameraPermission(false);
       toast({
         variant: 'destructive',
         title: 'Camera Access Denied',
-        description: 'Please enable camera permissions in your browser settings.',
+        description: 'Please enable camera permissions.',
       });
     }
   };
@@ -101,6 +95,33 @@ export default function ScanPage() {
     setIsCameraActive(false);
   };
 
+  const toggleVoice = () => {
+    const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+    if (!SpeechRecognition) {
+      toast({ title: 'Not Supported', description: 'Voice recognition is not supported in this browser.' });
+      return;
+    }
+
+    if (isListening) {
+      setIsListening(false);
+      return;
+    }
+
+    const recognition = new SpeechRecognition();
+    recognition.continuous = false;
+    recognition.interimResults = false;
+    recognition.lang = 'en-US';
+
+    recognition.onstart = () => setIsListening(true);
+    recognition.onend = () => setIsListening(false);
+    recognition.onresult = (event: any) => {
+      const transcript = event.results[0][0].transcript;
+      setInput(prev => prev + (prev ? ' ' : '') + transcript);
+    };
+
+    recognition.start();
+  };
+
   const handleSubmit = async (e?: React.FormEvent) => {
     e?.preventDefault();
     if ((!input.trim() && !selectedImage) || loading) return;
@@ -112,6 +133,12 @@ export default function ScanPage() {
     };
 
     setMessages(prev => [...prev, userMsg]);
+    
+    const history = messages.map(m => ({
+      role: m.role === 'user' ? 'user' as const : 'model' as const,
+      content: [{ text: m.content }]
+    }));
+
     const currentInput = input;
     const currentImg = selectedImage;
     
@@ -122,7 +149,8 @@ export default function ScanPage() {
     try {
       const result = await pathoScanAnalysis({
         message: currentInput || undefined,
-        photoDataUri: currentImg || undefined
+        photoDataUri: currentImg || undefined,
+        history: history
       });
 
       setMessages(prev => [...prev, {
@@ -134,7 +162,7 @@ export default function ScanPage() {
       toast({
         variant: 'destructive',
         title: 'AI Error',
-        description: 'Failed to process the request. Please try again.',
+        description: 'Failed to process request.',
       });
     } finally {
       setLoading(false);
@@ -156,18 +184,13 @@ export default function ScanPage() {
           <h1 className="text-xl font-bold font-headline tracking-tight">AI Scanner</h1>
         </div>
         <div className="ml-auto">
-          <Button 
-            variant="ghost" 
-            size="icon" 
-            onClick={() => setMessages([])} 
-            className="rounded-full text-muted-foreground"
-          >
+          <Button variant="ghost" size="icon" onClick={() => setMessages([])} className="rounded-full text-muted-foreground">
             <RotateCcw className="h-4 w-4" />
           </Button>
         </div>
       </header>
 
-      <main className="flex-1 overflow-y-auto px-4 pt-6 pb-48 space-y-6">
+      <main className="flex-1 overflow-y-auto px-4 pt-6 pb-48 space-y-8">
         {messages.length === 0 ? (
           <div className="h-full flex flex-col items-center justify-center text-center max-w-xs mx-auto space-y-6 opacity-60">
             <div className="h-24 w-24 bg-secondary rounded-[2.5rem] flex items-center justify-center">
@@ -176,59 +199,62 @@ export default function ScanPage() {
             <div className="space-y-2">
               <h2 className="text-xl font-bold font-headline">Hazard Scanner</h2>
               <p className="text-xs text-muted-foreground leading-relaxed">
-                Describe the situation or take a photo of an injury, spill, or hazard for instant safety advice.
+                Describe a situation or scan a hazard for instant safety advice.
               </p>
             </div>
           </div>
         ) : (
           messages.map((msg, i) => (
-            <div key={i} className={cn("flex flex-col space-y-2 animate-in fade-in slide-in-from-bottom-2", msg.role === 'user' ? 'items-end' : 'items-start')}>
-              <div className={cn(
-                "max-w-[85%] rounded-2xl px-5 py-3 text-sm shadow-lg",
-                msg.role === 'user' 
-                ? 'bg-primary text-primary-foreground rounded-tr-none' 
-                : 'bg-card border border-border rounded-tl-none'
-              )}>
-                {msg.image && (
-                  <div className="relative mb-3 rounded-lg overflow-hidden border border-black/10">
-                    <img src={msg.image} className="w-full max-h-64 object-cover" alt="Subject" />
-                  </div>
-                )}
-                <p className="leading-relaxed whitespace-pre-wrap">{msg.content}</p>
-                
-                {msg.data?.hasStructuredGuidance && (
-                  <div className="mt-4 pt-4 border-t border-border/20 space-y-4">
-                    <h3 className="font-bold text-accent text-[10px] uppercase tracking-widest">
-                      {msg.data.title || 'Safety Protocol'}
-                    </h3>
-                    <div className="space-y-3">
-                      {msg.data.instructions?.map((step, idx) => (
-                        <div key={idx} className="flex gap-3">
-                          <span className="h-5 w-5 rounded-md bg-accent/20 text-accent flex items-center justify-center text-[10px] font-bold shrink-0">
-                            {idx + 1}
-                          </span>
-                          <p className="text-[13px] text-muted-foreground leading-snug">{step}</p>
-                        </div>
-                      ))}
+            <div key={i} className={cn("flex flex-col space-y-3", msg.role === 'user' ? 'items-end' : 'items-start')}>
+              {msg.role === 'user' ? (
+                <div className="flex flex-col items-end gap-2 max-w-[85%]">
+                  {msg.image && (
+                    <div className="w-48 h-48 rounded-2xl overflow-hidden border border-primary/20 shadow-xl mb-1">
+                      <img src={msg.image} className="w-full h-full object-cover" alt="User upload" />
                     </div>
-                    {msg.data.warning && (
-                      <div className="bg-destructive/10 p-3 rounded-xl flex gap-2 border border-destructive/20">
-                        <AlertTriangle className="h-4 w-4 text-destructive shrink-0" />
-                        <p className="text-[10px] font-bold text-destructive leading-tight uppercase">
-                          {msg.data.warning}
-                        </p>
-                      </div>
-                    )}
+                  )}
+                  <div className="bg-black text-primary border border-primary/30 px-5 py-3 rounded-2xl rounded-tr-sm shadow-lg">
+                    <p className="text-sm leading-relaxed whitespace-pre-wrap">{msg.content}</p>
                   </div>
-                )}
-              </div>
+                </div>
+              ) : (
+                <div className="bg-card border border-border px-5 py-3 rounded-2xl rounded-tl-sm max-w-[85%] shadow-lg">
+                  <p className="text-sm text-foreground leading-relaxed whitespace-pre-wrap">{msg.content}</p>
+                  
+                  {msg.data?.hasStructuredGuidance && (
+                    <div className="mt-4 pt-4 border-t border-border/20 space-y-4">
+                      <h3 className="font-bold text-accent text-[10px] uppercase tracking-widest">
+                        {msg.data.title || 'Safety Protocol'}
+                      </h3>
+                      <div className="space-y-3">
+                        {msg.data.instructions?.map((step, idx) => (
+                          <div key={idx} className="flex gap-3">
+                            <span className="h-5 w-5 rounded-md bg-accent/20 text-accent flex items-center justify-center text-[10px] font-bold shrink-0">
+                              {idx + 1}
+                            </span>
+                            <p className="text-[13px] text-muted-foreground leading-snug">{step}</p>
+                          </div>
+                        ))}
+                      </div>
+                      {msg.data.warning && (
+                        <div className="bg-destructive/10 p-3 rounded-xl flex gap-2 border border-destructive/20">
+                          <AlertTriangle className="h-4 w-4 text-destructive shrink-0" />
+                          <p className="text-[10px] font-bold text-destructive leading-tight uppercase">
+                            {msg.data.warning}
+                          </p>
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
           ))
         )}
         {loading && (
           <div className="flex items-center gap-2 text-primary font-bold text-xs bg-primary/5 p-3 rounded-xl w-fit">
             <Loader2 className="h-3 w-3 animate-spin" />
-            <span>Analyzing environment...</span>
+            <span>AI is processing...</span>
           </div>
         )}
         <div ref={scrollRef} />
@@ -246,20 +272,9 @@ export default function ScanPage() {
                 <RefreshCw className="h-5 w-5" />
              </Button>
           </div>
-          
-          <video 
-            ref={videoRef} 
-            autoPlay 
-            playsInline 
-            muted
-            className="flex-1 object-cover"
-          />
-          
+          <video ref={videoRef} autoPlay playsInline muted className="flex-1 object-cover" />
           <div className="absolute bottom-12 left-0 right-0 z-[110] flex flex-col items-center gap-6">
-            <button 
-              className="h-20 w-20 rounded-full border-4 border-white p-1 group active:scale-95 transition-all" 
-              onClick={capturePhoto}
-            >
+            <button className="h-20 w-20 rounded-full border-4 border-white p-1 group active:scale-95 transition-all" onClick={capturePhoto}>
                <div className="h-full w-full rounded-full bg-white group-active:bg-primary transition-colors" />
             </button>
           </div>
@@ -268,16 +283,12 @@ export default function ScanPage() {
 
       {/* Floating Action Bar */}
       <div className="fixed bottom-24 left-0 right-0 px-4 z-40">
-        <div className="max-w-2xl mx-auto flex flex-col bg-card border border-border rounded-2xl shadow-2xl overflow-hidden pointer-events-auto">
-          {/* Integrated Image Preview */}
+        <div className="max-w-2xl mx-auto flex flex-col bg-card border border-border rounded-xl shadow-2xl overflow-hidden">
           {selectedImage && (
             <div className="p-3 bg-secondary/30 border-b border-border flex items-center gap-3 animate-in slide-in-from-bottom-2">
               <div className="relative h-16 w-16 rounded-lg overflow-hidden border border-border shadow-md">
                 <img src={selectedImage} className="w-full h-full object-cover" alt="Preview" />
-                <button 
-                  className="absolute top-0.5 right-0.5 h-5 w-5 rounded-full bg-black/70 flex items-center justify-center text-white"
-                  onClick={() => setSelectedImage(null)}
-                >
+                <button className="absolute top-0.5 right-0.5 h-5 w-5 rounded-full bg-black/70 flex items-center justify-center text-white" onClick={() => setSelectedImage(null)}>
                   <X className="h-3 w-3" />
                 </button>
               </div>
@@ -291,30 +302,23 @@ export default function ScanPage() {
           <div className="flex items-center gap-1 p-2">
             <div className="flex shrink-0">
               <input type="file" ref={fileInputRef} hidden accept="image/*" onChange={handleImageUpload} />
-              <Button 
-                variant="ghost" 
-                size="icon" 
-                className="rounded-full h-10 w-10 text-muted-foreground hover:text-primary" 
-                onClick={() => fileInputRef.current?.click()}
-              >
+              <Button variant="ghost" size="icon" className="rounded-full h-10 w-10 bg-primary text-black hover:bg-primary/90" onClick={() => fileInputRef.current?.click()}>
                 <ImageIcon className="h-5 w-5" />
               </Button>
-              <Button 
-                variant="ghost" 
-                size="icon" 
-                className="rounded-full h-10 w-10 text-muted-foreground hover:text-primary" 
-                onClick={() => startCamera()}
-              >
+              <Button variant="ghost" size="icon" className="rounded-full h-10 w-10 bg-primary text-black hover:bg-primary/90 ml-1" onClick={() => startCamera()}>
                 <Camera className="h-5 w-5" />
+              </Button>
+              <Button variant="ghost" size="icon" className={cn("rounded-full h-10 w-10 ml-1 transition-colors", isListening ? "bg-destructive text-white" : "bg-primary text-black hover:bg-primary/90")} onClick={toggleVoice}>
+                {isListening ? <MicOff className="h-5 w-5" /> : <Mic className="h-5 w-5" />}
               </Button>
             </div>
             
-            <div className="flex-1 flex items-center h-full px-2">
+            <div className="flex-1 flex items-center h-full px-3">
               <textarea
                 rows={1}
                 suppressHydrationWarning
-                className="w-full bg-transparent border-none py-2 text-sm focus:ring-0 outline-none resize-none max-h-32 placeholder:text-muted-foreground/50"
-                placeholder="What happened?"
+                className="w-full bg-transparent border-none py-3 text-sm focus:ring-0 outline-none resize-none max-h-32 placeholder:text-muted-foreground/50"
+                placeholder={isListening ? "Listening..." : "What happened?"}
                 value={input}
                 onChange={(e) => {
                   setInput(e.target.value);
@@ -330,12 +334,7 @@ export default function ScanPage() {
               />
             </div>
 
-            <Button 
-              size="icon"
-              className="rounded-xl h-10 w-10 bg-primary hover:bg-primary/90 text-primary-foreground shadow-lg shrink-0" 
-              onClick={() => handleSubmit()}
-              disabled={loading || (!input.trim() && !selectedImage)}
-            >
+            <Button size="icon" className="rounded-xl h-10 w-10 bg-primary hover:bg-primary/90 text-black shadow-lg shrink-0" onClick={() => handleSubmit()} disabled={loading || (!input.trim() && !selectedImage)}>
               <Send className="h-4 w-4" />
             </Button>
           </div>

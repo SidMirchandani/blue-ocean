@@ -46,7 +46,6 @@ export default function ScanPage() {
   };
 
   const startCamera = async (mode: 'user' | 'environment' = facingMode) => {
-    // If stream already exists, stop it first to switch cleanly
     if (videoRef.current?.srcObject) {
       const currentStream = videoRef.current.srcObject as MediaStream;
       currentStream.getTracks().forEach(track => track.stop());
@@ -140,7 +139,6 @@ export default function ScanPage() {
 
   return (
     <div className="flex flex-col h-screen bg-background overflow-hidden relative">
-      {/* Header */}
       <header className="flex items-center gap-4 px-6 py-4 bg-card/50 backdrop-blur-xl border-b border-border z-30">
         <Link href="/">
           <Button variant="ghost" size="icon" className="rounded-full hover:bg-secondary">
@@ -165,8 +163,7 @@ export default function ScanPage() {
         </div>
       </header>
 
-      {/* Messages */}
-      <main className="flex-1 overflow-y-auto px-4 pt-6 pb-36 space-y-6">
+      <main className="flex-1 overflow-y-auto px-4 pt-6 pb-40 space-y-6">
         {messages.length === 0 ? (
           <div className="h-full flex flex-col items-center justify-center text-center max-w-xs mx-auto space-y-6">
             <div className="h-28 w-28 bg-primary/10 rounded-[3rem] flex items-center justify-center relative">
@@ -237,7 +234,6 @@ export default function ScanPage() {
         <div ref={scrollRef} />
       </main>
 
-      {/* Camera Popup Overlay */}
       {isCameraActive && (
         <div className="fixed inset-0 z-[100] bg-black flex flex-col animate-in fade-in zoom-in-95 duration-200">
           <div className="absolute top-0 left-0 right-0 z-[110] flex justify-between items-center p-6 bg-gradient-to-b from-black/60 to-transparent">
@@ -271,7 +267,6 @@ export default function ScanPage() {
         </div>
       )}
 
-      {/* Floating Action Bar */}
       <div className="fixed bottom-24 left-0 right-0 px-4 z-40 pointer-events-none">
         <div className="max-w-3xl mx-auto pointer-events-auto flex flex-col gap-3">
           {selectedImage && (
@@ -286,7 +281,7 @@ export default function ScanPage() {
             </div>
           )}
           
-          <div className="flex items-end gap-2 bg-card/90 backdrop-blur-3xl border border-border/50 p-2.5 rounded-[2.5rem] shadow-[0_20px_50px_rgba(0,0,0,0.5)]">
+          <div className="flex items-center gap-2 bg-card/90 backdrop-blur-3xl border border-border/50 p-2.5 rounded-[2.5rem] shadow-[0_20px_50px_rgba(0,0,0,0.5)]">
             <div className="flex gap-1.5 shrink-0">
               <input type="file" ref={fileInputRef} hidden accept="image/*" onChange={handleImageUpload} />
               <Button 
@@ -307,11 +302,11 @@ export default function ScanPage() {
               </Button>
             </div>
             
-            <div className="flex-1 relative mb-0.5">
+            <div className="flex-1 relative">
               <textarea
                 rows={1}
                 suppressHydrationWarning
-                className="w-full bg-transparent border-none rounded-2xl px-4 py-3 text-sm focus:ring-0 outline-none resize-none max-h-32 placeholder:text-muted-foreground/40"
+                className="w-full bg-transparent border-none rounded-2xl px-4 py-3.5 text-sm focus:ring-0 outline-none resize-none max-h-32 placeholder:text-muted-foreground/40"
                 placeholder="Describe the hazard..."
                 value={input}
                 onChange={(e) => {

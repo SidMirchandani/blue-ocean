@@ -1,27 +1,52 @@
 "use client"
 
-import { useState } from 'react';
-import { Search, ArrowLeft, BookOpen, ChevronRight, X, ShieldCheck, Zap, Info, Layers, CheckCircle2 } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { Search, ArrowLeft, BookOpen, ChevronRight, X, ShieldCheck, Zap, Info, Layers, CheckCircle2, FlaskConical, Droplets, Radiation, Home } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent } from '@/components/ui/card';
 import { BottomNav } from '@/components/navigation/BottomNav';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import Link from 'next/link';
+import { useSearchParams } from 'next/navigation';
 import { KNOWLEDGE_BASE, Article } from '@/lib/knowledge-base';
 import { cn } from '@/lib/utils';
 
 export default function KnowledgeBasePage() {
+  const searchParams = useSearchParams();
+  const initialTab = searchParams.get('tab') === 'articles' ? 'articles' : 'protocols';
+  
+  const [activeTab, setActiveTab] = useState(initialTab);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedArticle, setSelectedArticle] = useState<Article | null>(null);
 
+  useEffect(() => {
+    const tab = searchParams.get('tab');
+    if (tab === 'articles' || tab === 'protocols') {
+      setActiveTab(tab);
+    }
+  }, [searchParams]);
+
   const filteredItems = KNOWLEDGE_BASE.filter(item => 
     item.title.toLowerCase().includes(searchQuery.toLowerCase()) || 
-    item.summary.toLowerCase().includes(searchQuery.toLowerCase())
+    item.summary.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    item.category.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
   const protocols = filteredItems.filter(i => i.type === 'Protocol');
   const articles = filteredItems.filter(i => i.type === 'Article');
+
+  const getCategoryIcon = (category: string) => {
+    switch (category) {
+      case 'Chemical': return <FlaskConical className="h-4 w-4" />;
+      case 'Biological': return <Layers className="h-4 w-4" />;
+      case 'Radiation': return <Radiation className="h-4 w-4" />;
+      case 'Industrial': return <Layers className="h-4 w-4" />;
+      case 'Home': return <Home className="h-4 w-4" />;
+      case 'Environmental': return <Droplets className="h-4 w-4" />;
+      default: return <Info className="h-4 w-4" />;
+    }
+  };
 
   return (
     <div className="flex flex-col min-h-screen bg-background">
@@ -50,7 +75,7 @@ export default function KnowledgeBasePage() {
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
               <Input 
                 className="pl-10 h-12 bg-secondary/50 border-none rounded-2xl"
-                placeholder="Search protocols & articles..."
+                placeholder={`Search ${activeTab === 'protocols' ? 'first aid steps' : 'safety articles'}...`}
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
               />
@@ -73,11 +98,12 @@ export default function KnowledgeBasePage() {
         {selectedArticle ? (
           <div className="max-w-2xl mx-auto space-y-6 pb-24 animate-in fade-in slide-in-from-bottom-4 duration-300">
             <div className="flex items-center gap-2">
-              <span className="px-2 py-0.5 rounded-full bg-primary/10 text-primary text-[10px] font-bold uppercase tracking-wider">
+              <span className="px-2 py-0.5 rounded-full bg-primary/10 text-primary text-[10px] font-bold uppercase tracking-wider flex items-center gap-1">
+                {getCategoryIcon(selectedArticle.category)}
                 {selectedArticle.category}
               </span>
               {selectedArticle.readTime && (
-                <span className="text-[10px] text-muted-foreground">• {selectedArticle.readTime} read</span>
+                <span className="text-[10px] text-muted-foreground font-bold uppercase tracking-widest">• {selectedArticle.readTime} read</span>
               )}
             </div>
 
@@ -98,7 +124,7 @@ export default function KnowledgeBasePage() {
                       <div className="h-8 w-8 rounded-2xl bg-primary/10 flex items-center justify-center text-primary font-bold text-sm shrink-0">
                         {idx + 1}
                       </div>
-                      <p className="text-sm text-foreground leading-relaxed pt-1 flex-1">{step}</p>
+                      <p className="text-sm text-foreground leading-relaxed pt-1 flex-1 font-medium">{step}</p>
                     </div>
                   ))}
                 </div>
@@ -124,34 +150,42 @@ export default function KnowledgeBasePage() {
             </div>
           </div>
         ) : (
-          <Tabs defaultValue="protocols" className="w-full pb-24">
+          <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full pb-24">
             <TabsList className="w-full bg-secondary/50 p-1 rounded-2xl h-12 mb-6">
-              <TabsTrigger value="protocols" className="flex-1 rounded-xl data-[state=active]:bg-primary data-[state=active]:text-primary-foreground font-bold text-xs uppercase tracking-widest">
-                Quick Protocols
+              <TabsTrigger value="protocols" className="flex-1 rounded-xl data-[state=active]:bg-primary data-[state=active]:text-primary-foreground font-bold text-xs uppercase tracking-widest transition-all">
+                First Aid
               </TabsTrigger>
-              <TabsTrigger value="articles" className="flex-1 rounded-xl data-[state=active]:bg-primary data-[state=active]:text-primary-foreground font-bold text-xs uppercase tracking-widest">
-                Deep Dives
+              <TabsTrigger value="articles" className="flex-1 rounded-xl data-[state=active]:bg-primary data-[state=active]:text-primary-foreground font-bold text-xs uppercase tracking-widest transition-all">
+                Safety Articles
               </TabsTrigger>
             </TabsList>
 
             <TabsContent value="protocols" className="space-y-4">
               <div className="flex items-center gap-2 px-1 mb-2">
                 <Zap className="h-4 w-4 text-primary" />
-                <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">Immediate Response Guides</span>
+                <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">Immediate Response Protocols</span>
               </div>
-              {protocols.map((protocol) => (
-                <ProtocolCard key={protocol.id} item={protocol} onSelect={setSelectedArticle} />
-              ))}
+              {protocols.length > 0 ? (
+                protocols.map((protocol) => (
+                  <ProtocolCard key={protocol.id} item={protocol} onSelect={setSelectedArticle} />
+                ))
+              ) : (
+                <p className="text-center text-muted-foreground text-sm py-10">No protocols found matching your search.</p>
+              )}
             </TabsContent>
 
             <TabsContent value="articles" className="space-y-4">
               <div className="flex items-center gap-2 px-1 mb-2">
                 <Info className="h-4 w-4 text-blue-500" />
-                <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">Educational Resources</span>
+                <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">In-Depth Safety Literacy</span>
               </div>
-              {articles.map((article) => (
-                <ArticleCard key={article.id} item={article} onSelect={setSelectedArticle} />
-              ))}
+              {articles.length > 0 ? (
+                articles.map((article) => (
+                  <ArticleCard key={article.id} item={article} onSelect={setSelectedArticle} />
+                ))
+              ) : (
+                <p className="text-center text-muted-foreground text-sm py-10">No articles found matching your search.</p>
+              )}
             </TabsContent>
           </Tabs>
         )}

@@ -121,7 +121,7 @@ export default function ScanPage() {
   };
 
   return (
-    <div className="flex flex-col h-screen bg-background overflow-hidden">
+    <div className="flex flex-col h-screen bg-background overflow-hidden relative">
       {/* Header */}
       <header className="flex items-center gap-4 px-6 py-4 bg-card/50 backdrop-blur-xl border-b border-border z-30">
         <Link href="/">
@@ -141,7 +141,7 @@ export default function ScanPage() {
       </header>
 
       {/* Messages */}
-      <main className="flex-1 overflow-y-auto px-4 py-6 space-y-6">
+      <main className="flex-1 overflow-y-auto px-4 pt-6 pb-32 space-y-6">
         {messages.length === 0 ? (
           <div className="h-full flex flex-col items-center justify-center text-center max-w-xs mx-auto space-y-6 opacity-60">
             <div className="h-24 w-24 bg-primary/10 rounded-[2.5rem] flex items-center justify-center">
@@ -202,7 +202,7 @@ export default function ScanPage() {
 
       {/* Camera Overlay */}
       {isCameraActive && (
-        <div className="fixed inset-0 z-50 bg-black flex flex-col">
+        <div className="fixed inset-0 z-[100] bg-black flex flex-col">
           <video ref={videoRef} autoPlay playsInline className="flex-1 object-cover" />
           <div className="absolute top-6 left-6">
             <Button variant="ghost" size="icon" className="rounded-full bg-black/50 text-white backdrop-blur-md" onClick={stopCamera}>
@@ -210,7 +210,7 @@ export default function ScanPage() {
             </Button>
           </div>
           <div className="absolute bottom-10 left-0 right-0 flex justify-center items-center gap-8 px-6">
-            <div className="w-12 h-12" /> {/* Balance */}
+            <div className="w-12 h-12" />
             <button className="h-20 w-20 rounded-full border-4 border-white flex items-center justify-center group active:scale-95 transition-all" onClick={capturePhoto}>
                <div className="h-16 w-16 rounded-full bg-white group-active:bg-primary transition-colors" />
             </button>
@@ -221,28 +221,28 @@ export default function ScanPage() {
         </div>
       )}
 
-      {/* Input Section */}
-      <div className="p-4 bg-card/80 backdrop-blur-xl border-t border-border z-40">
-        <div className="max-w-3xl mx-auto flex flex-col gap-2">
+      {/* Floating Input Section */}
+      <div className="absolute bottom-20 left-0 right-0 px-4 z-40 pointer-events-none">
+        <div className="max-w-3xl mx-auto pointer-events-auto">
           {selectedImage && (
-            <div className="relative w-20 h-20 rounded-xl overflow-hidden mb-2 group border border-primary/20">
+            <div className="relative w-20 h-20 rounded-xl overflow-hidden mb-3 group border-2 border-primary/50 shadow-2xl animate-in zoom-in-50">
               <img src={selectedImage} className="w-full h-full object-cover" alt="Preview" />
               <button 
-                className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
+                className="absolute inset-0 bg-black/60 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
                 onClick={() => setSelectedImage(null)}
               >
-                <RotateCcw className="h-4 w-4 text-white" />
+                <X className="h-6 w-6 text-white" />
               </button>
             </div>
           )}
           
-          <div className="flex items-end gap-2">
+          <div className="flex items-end gap-2 bg-card/90 backdrop-blur-2xl border border-border p-2 rounded-3xl shadow-2xl">
             <div className="flex gap-1 shrink-0">
               <input type="file" ref={fileInputRef} hidden accept="image/*" onChange={handleImageUpload} />
-              <Button variant="secondary" size="icon" className="rounded-2xl h-11 w-11 bg-secondary hover:bg-secondary/70" onClick={() => fileInputRef.current?.click()}>
+              <Button variant="secondary" size="icon" className="rounded-2xl h-12 w-12 bg-secondary/80 hover:bg-primary/20 hover:text-primary transition-all" onClick={() => fileInputRef.current?.click()}>
                 <ImageIcon className="h-5 w-5" />
               </Button>
-              <Button variant="secondary" size="icon" className="rounded-2xl h-11 w-11 bg-secondary hover:bg-secondary/70" onClick={startCamera}>
+              <Button variant="secondary" size="icon" className="rounded-2xl h-12 w-12 bg-secondary/80 hover:bg-primary/20 hover:text-primary transition-all" onClick={startCamera}>
                 <Camera className="h-5 w-5" />
               </Button>
             </div>
@@ -250,9 +250,8 @@ export default function ScanPage() {
             <div className="flex-1 relative">
               <textarea
                 rows={1}
-                suppressHydrationWarning
-                className="w-full bg-secondary/50 border-none rounded-2xl px-4 py-3 text-sm focus:ring-2 focus:ring-primary outline-none resize-none max-h-32"
-                placeholder="What is happening?"
+                className="w-full bg-transparent border-none rounded-2xl px-3 py-3 text-sm focus:ring-0 outline-none resize-none max-h-32 placeholder:text-muted-foreground/50"
+                placeholder="Message AI Scanner..."
                 value={input}
                 onChange={(e) => {
                   setInput(e.target.value);
@@ -269,7 +268,7 @@ export default function ScanPage() {
             </div>
 
             <Button 
-              className="rounded-2xl h-11 w-11 shadow-lg shadow-primary/20 shrink-0" 
+              className="rounded-2xl h-12 w-12 shadow-lg shadow-primary/20 shrink-0 bg-primary hover:bg-primary/90" 
               onClick={() => handleSubmit()}
               disabled={loading || (!input.trim() && !selectedImage)}
             >

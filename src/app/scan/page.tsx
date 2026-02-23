@@ -24,6 +24,7 @@ export default function ScanPage() {
   const [isCameraActive, setIsCameraActive] = useState(false);
   const [facingMode, setFacingMode] = useState<'user' | 'environment'>('environment');
   const [isListening, setIsListening] = useState(false);
+  const recognitionRef = useRef<any>(null);
   
   const scrollRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -103,22 +104,33 @@ export default function ScanPage() {
     }
 
     if (isListening) {
+      recognitionRef.current?.stop();
       setIsListening(false);
       return;
     }
 
     const recognition = new SpeechRecognition();
-    recognition.continuous = false;
-    recognition.interimResults = false;
+    recognition.continuous = true;
+    recognition.interimResults = true;
     recognition.lang = 'en-US';
 
     recognition.onstart = () => setIsListening(true);
     recognition.onend = () => setIsListening(false);
+    recognition.onerror = () => setIsListening(false);
+    
     recognition.onresult = (event: any) => {
-      const transcript = event.results[0][0].transcript;
-      setInput(prev => prev + (prev ? ' ' : '') + transcript);
+      let finalTranscript = '';
+      for (let i = event.resultIndex; i < event.results.length; ++i) {
+        if (event.results[i].isFinal) {
+          finalTranscript += event.results[i][0].transcript;
+        }
+      }
+      if (finalTranscript) {
+        setInput(prev => prev + (prev ? ' ' : '') + finalTranscript);
+      }
     };
 
+    recognitionRef.current = recognition;
     recognition.start();
   };
 
@@ -190,7 +202,10 @@ export default function ScanPage() {
         </div>
       </header>
 
-      <main className="flex-1 overflow-y-auto px-4 pt-6 pb-48 space-y-8">
+      <main className="flex-1 overflow-y-auto px-4 pt-10 pb-48 space-y-8 relative">
+        {/* Top Fade */}
+        <div className="fixed top-16 left-0 right-0 h-16 bg-gradient-to-b from-background to-transparent z-20 pointer-events-none" />
+        
         {messages.length === 0 ? (
           <div className="h-full flex flex-col items-center justify-center text-center max-w-xs mx-auto space-y-6 opacity-60">
             <div className="h-24 w-24 bg-secondary rounded-[2.5rem] flex items-center justify-center">
@@ -209,12 +224,12 @@ export default function ScanPage() {
               {msg.role === 'user' ? (
                 <div className="flex flex-col items-end gap-2 max-w-[85%]">
                   {msg.image && (
-                    <div className="w-48 h-48 rounded-2xl overflow-hidden border border-primary/20 shadow-xl mb-1">
+                    <div className="w-48 h-48 rounded-2xl overflow-hidden border border-border shadow-xl mb-1">
                       <img src={msg.image} className="w-full h-full object-cover" alt="User upload" />
                     </div>
                   )}
-                  <div className="bg-black text-primary border border-primary/30 px-5 py-3 rounded-2xl rounded-tr-sm shadow-lg">
-                    <p className="text-sm leading-relaxed whitespace-pre-wrap">{msg.content}</p>
+                  <div className="bg-black border border-primary/30 px-5 py-3 rounded-2xl rounded-tr-sm shadow-lg">
+                    <p className="text-sm font-medium text-primary leading-relaxed whitespace-pre-wrap">{msg.content}</p>
                   </div>
                 </div>
               ) : (
@@ -258,6 +273,9 @@ export default function ScanPage() {
           </div>
         )}
         <div ref={scrollRef} />
+
+        {/* Bottom Fade */}
+        <div className="fixed bottom-24 left-0 right-0 h-24 bg-gradient-to-t from-background via-background/80 to-transparent z-20 pointer-events-none" />
       </main>
 
       {/* Fullscreen Camera View */}
@@ -283,42 +301,62 @@ export default function ScanPage() {
 
       {/* Floating Action Bar */}
       <div className="fixed bottom-24 left-0 right-0 px-4 z-40">
-        <div className="max-w-2xl mx-auto flex flex-col bg-card border border-border rounded-xl shadow-2xl overflow-hidden">
+        <div className="max-w-2xl mx-auto flex flex-col bg-card border border-border rounded-2xl shadow-2xl overflow-hidden">
           {selectedImage && (
-            <div className="p-3 bg-secondary/30 border-b border-border flex items-center gap-3 animate-in slide-in-from-bottom-2">
-              <div className="relative h-16 w-16 rounded-lg overflow-hidden border border-border shadow-md">
+            <div className="p-4 bg-secondary/30 border-b border-border flex items-center gap-3 animate-in slide-in-from-bottom-2">
+              <div className="relative h-20 w-20 rounded-xl overflow-hidden border border-border shadow-md">
                 <img src={selectedImage} className="w-full h-full object-cover" alt="Preview" />
-                <button className="absolute top-0.5 right-0.5 h-5 w-5 rounded-full bg-black/70 flex items-center justify-center text-white" onClick={() => setSelectedImage(null)}>
-                  <X className="h-3 w-3" />
+                <button className="absolute top-1 right-1 h-6 w-6 rounded-full bg-black/70 flex items-center justify-center text-white" onClick={() => setSelectedImage(null)}>
+                  <X className="h-4 w-4" />
                 </button>
               </div>
               <div className="flex-1">
-                <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">Image Attached</p>
-                <p className="text-[11px] text-muted-foreground">Ask AI about this photo</p>
+                <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">Attachment</p>
+                <p className="text-xs text-muted-foreground">Ask PathoScan about this hazard</p>
               </div>
             </div>
           )}
           
-          <div className="flex items-center gap-1 p-2">
-            <div className="flex shrink-0">
+          <div className="flex items-center gap-2 p-3">
+            <div className="flex shrink-0 gap-1.5">
               <input type="file" ref={fileInputRef} hidden accept="image/*" onChange={handleImageUpload} />
-              <Button variant="ghost" size="icon" className="rounded-full h-10 w-10 bg-primary text-black hover:bg-primary/90" onClick={() => fileInputRef.current?.click()}>
+              <Button 
+                variant="ghost" 
+                size="icon" 
+                className="rounded-full h-11 w-11 bg-secondary text-muted-foreground hover:bg-primary hover:text-black transition-all" 
+                onClick={() => fileInputRef.current?.click()}
+              >
                 <ImageIcon className="h-5 w-5" />
               </Button>
-              <Button variant="ghost" size="icon" className="rounded-full h-10 w-10 bg-primary text-black hover:bg-primary/90 ml-1" onClick={() => startCamera()}>
+              <Button 
+                variant="ghost" 
+                size="icon" 
+                className="rounded-full h-11 w-11 bg-secondary text-muted-foreground hover:bg-primary hover:text-black transition-all" 
+                onClick={() => startCamera()}
+              >
                 <Camera className="h-5 w-5" />
               </Button>
-              <Button variant="ghost" size="icon" className={cn("rounded-full h-10 w-10 ml-1 transition-colors", isListening ? "bg-destructive text-white" : "bg-primary text-black hover:bg-primary/90")} onClick={toggleVoice}>
-                {isListening ? <MicOff className="h-5 w-5" /> : <Mic className="h-5 w-5" />}
+              <Button 
+                variant="ghost" 
+                size="icon" 
+                className={cn(
+                  "rounded-full h-11 w-11 transition-all", 
+                  isListening 
+                    ? "bg-primary text-black animate-pulse shadow-[0_0_15px_rgba(0,209,178,0.3)]" 
+                    : "bg-secondary text-muted-foreground hover:bg-primary hover:text-black"
+                )} 
+                onClick={toggleVoice}
+              >
+                <Mic className="h-5 w-5" />
               </Button>
             </div>
             
-            <div className="flex-1 flex items-center h-full px-3">
+            <div className="flex-1 flex items-center h-full px-1">
               <textarea
                 rows={1}
                 suppressHydrationWarning
-                className="w-full bg-transparent border-none py-3 text-sm focus:ring-0 outline-none resize-none max-h-32 placeholder:text-muted-foreground/50"
-                placeholder={isListening ? "Listening..." : "What happened?"}
+                className="w-full bg-transparent border-none py-3 text-sm focus:ring-0 outline-none resize-none max-h-32 placeholder:text-muted-foreground/40 mt-1"
+                placeholder={isListening ? "Listening..." : "What's the hazard?"}
                 value={input}
                 onChange={(e) => {
                   setInput(e.target.value);
@@ -334,8 +372,8 @@ export default function ScanPage() {
               />
             </div>
 
-            <Button size="icon" className="rounded-xl h-10 w-10 bg-primary hover:bg-primary/90 text-black shadow-lg shrink-0" onClick={() => handleSubmit()} disabled={loading || (!input.trim() && !selectedImage)}>
-              <Send className="h-4 w-4" />
+            <Button size="icon" className="rounded-xl h-11 w-11 bg-primary hover:bg-primary/90 text-black shadow-lg shrink-0" onClick={() => handleSubmit()} disabled={loading || (!input.trim() && !selectedImage)}>
+              <Send className="h-5 w-5" />
             </Button>
           </div>
         </div>
